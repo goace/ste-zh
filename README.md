@@ -4,9 +4,9 @@
 
 一个面向 AI Agent 的任务汇报规范 skill。借鉴航空与工业界严谨的 **ASD-STE100**（Simplified Technical English，简化技术英语）原则，约束 Agent 用清晰、严密且无歧义的中文汇报工作结果。
 
-Agent 的日常汇报常常过程冗长、推测含糊，或者漏掉关键的验证证据。开启 `ste-zh` 后，Agent 将遵循受控中文规范进行汇报：**关键信息先行、实证说话、状态固定、一目了然**。
+Agent 的日常汇报常常过程冗长、推测含糊，或者漏掉关键的验证证据。`ste-zh` 为适用的工作汇报提供受控中文规范：**关键信息先行、实证说话、状态固定、一目了然**。
 
-> 💡 本 skill 仅规范 Agent 向用户汇报与讨论时的表达方式，绝不影响项目代码、注释、Commit 信息及生成的文件内容。
+> 本 skill 只用于向用户汇报工作结果、实质进度、排查结论、方案取舍和多项工作总结。简短事实问答、普通交流、写给 agent 的材料及其草稿不适用；代码、注释、Commit 信息和写入项目的文件也不适用。完整判断顺序见 [适用范围](SKILL.md#适用范围)。
 
 ---
 
@@ -48,7 +48,8 @@ Agent 的日常汇报常常过程冗长、推测含糊，或者漏掉关键的�
 
 ## 核心特性
 
-- **关键信息先行**：首句按回复类型写。结果写状态与完成范围，进度写当前动作，需求总结写总结范围。普通解释或建议不强套模板。
+- **先判断适用范围**：加载不等于所有回复都适用。每条回复、每个内容部分分别判断；简短事实问答和普通交流不执行规则、模板或自检。
+- **关键信息先行**：适用内容的首句按汇报类型写。结果写状态与完成范围，进度写当前动作，需求总结写总结范围。简短汇报只写必要句子。
 - **状态固定**：工作状态与验证状态分别表述，且各自限定范围。「已完成」不自动表示「已验证」。完整定义见 [术语表第 4 节](references/terminology.md#4-状态词)。
 - **如实写验证**：分清事实、推断和假设。事实必须有来源支持，推断写明依据，假设写明依据和核实方法。修复效果、运行行为和检查结果写明检查方法、结果与覆盖范围。有依据的分析可以保留，但不能冒充已验证的运行结果。进度、建议、需求摘要和待决事项不强加验证状态；其中的实际效果断言仍须写验证。资料内容证据不能代替运行验证。
 - **一词一义与主动语态**：同一个概念只用同一个叫法，不同概念保留区别；消除虚化动词与歧义长句；短句以不损失原意为前提，条件、路径等完整信息优先。
@@ -60,41 +61,49 @@ Agent 的日常汇报常常过程冗长、推测含糊，或者漏掉关键的�
 
 ### 推荐：使用 `skills` CLI 安装
 
-[`skills`](https://github.com/vercel-labs/skills) 是 Vercel Labs 推出的 Agent Skill 管理工具，支持 Claude Code、Cursor、Codex 等主流环境。工具会自动按配置将本技能安装至 `ste` 目录。
+[`skills`](https://github.com/vercel-labs/skills) 是 Vercel Labs 推出的 Agent Skill 管理工具，支持 Claude Code、Cursor、Codex 等主流环境。本 fork 的技能名称和安装目录名统一为 `ste-zh`。
 
 全局安装（所有项目通用）：
 
 ```bash
-npx skills add dualface/ste-zh -g
+npx skills add goace/ste-zh -g
 ```
 
 安装到当前项目：
 
 ```bash
-npx skills add dualface/ste-zh
+npx skills add goace/ste-zh
 ```
 
 仅为指定 Agent 安装（例如 Claude Code）：
 
 ```bash
-npx skills add dualface/ste-zh -g -a claude-code
+npx skills add goace/ste-zh -g -a claude-code
 ```
 
 更新与卸载：
 
 ```bash
-npx skills update ste -g
-npx skills remove --global ste
+npx skills update
+npx skills remove --global ste-zh
 ```
 
 ### 手动安装
 
-将本仓库克隆至 Agent 的 skills 目录下即可。由于本 skill 的标准名称为 `ste`，克隆时请确保目标目录命名为 `ste`：
+将本仓库克隆至 Agent 的 skills 目录下，目标目录命名为 `ste-zh`。
+
+**Codex（用户级）：**
+
+```bash
+git clone https://github.com/goace/ste-zh.git ~/.agents/skills/ste-zh
+```
+
+目录依据见 [Codex 技能文档](https://developers.openai.com/codex/skills/)。
 
 **Claude Code（全局）：**
 
 ```bash
-git clone https://github.com/dualface/ste-zh.git ~/.claude/skills/ste
+git clone https://github.com/goace/ste-zh.git ~/.claude/skills/ste-zh
 ```
 
 其他支持 `SKILL.md` 规范的 Agent，参考各自文档将文件放置在对应的 skills 路径下。
@@ -103,21 +112,22 @@ git clone https://github.com/dualface/ste-zh.git ~/.claude/skills/ste
 
 ## 使用方式
 
-在对话中输入以下任意指令，即可启用本 skill：
+安装后，技能可供 Agent 发现。若希望 Codex 每个会话都调用它，将下面的内容加入全局 AGENTS.md（默认位于 `~/.codex/AGENTS.md`）：
 
-- `/ste`
-- 「用 STE 规范输出」
-- 「按 ASD-STE100 汇报」
+```markdown
+## 向用户汇报
 
-启用后，当前会话中的所有汇报都将严格按照本规范组织。如需退出，发送「停止 ste」或「stop ste」即可。
+每个会话调用 `ste-zh` 技能，并严格按其适用范围执行。
+仅在向用户汇报工作结果、实质进度、排查结论、方案取舍和多项工作总结时应用。
+简短事实问答、普通交流、写给 agent 的材料及其草稿不适用。
+一条回复包含多种内容时，分别判断，只约束适用的汇报部分。
+```
 
-> 更高优先级指令和用户明确指定的输出格式优先。同级风格规则冲突且用户未明确指定风格时，按本 skill 写。
+AGENTS.md 的读取方式见 [Codex 文档](https://developers.openai.com/codex/guides/agents-md/)。以上只提供配置示例，安装技能不会自动修改全局规则。
 
-### 注意事项
+调用技能与应用写法是两件事：Agent 先读取技能，再按当前内容判断。即使前一条是正式汇报，下一条简单问答仍按日常方式回答。给 agent 编写的材料始终按自身要求编写，不因放在聊天中供用户审阅而改用 STE。
 
-- **运行机制**：本 skill 靠 Agent 遵守上下文中的指令生效，没有程序强制执行。
-- **上下文衰减**：在极长会话或发生上下文压缩（compaction）后，Agent 可能会遗忘指令规范。若发现输出风格退化，随时重新发送 `/ste` 即可恢复。
-- **全局常驻**：如希望每个会话默认开启，可将「每个会话开始时加载 ste skill」写入 Agent 的全局规则中（例如 Claude Code 的 `~/.claude/CLAUDE.md` 或 `~/.claude/rules/` 规则文件）。
+具体对照见 [适用范围示例](examples/scope-boundaries.md)。用户明确指定的风格、格式和更高优先级指令优先。本 skill 依靠 Agent 遵守指令，不由程序强制执行。
 
 ---
 
@@ -143,10 +153,11 @@ git clone https://github.com/dualface/ste-zh.git ~/.claude/skills/ste
 
 | 路径                        | 说明                                                                              |
 | --------------------------- | --------------------------------------------------------------------------------- |
-| `SKILL.md`                  | skill 入口：生效机制、适用范围、25 条核心规则、5 种标准化输出模板及自检清单       |
+| `SKILL.md`                  | skill 入口：加载与使用、适用范围、25 条核心规则、5 种标准化输出模板及自检清单       |
 | `references/terminology.md` | 术语字典：ASD-STE100 关键词译法、受控情态词、虚化动词替换表、固定状态词与标点规范 |
 | `examples/result-report.md` | 单任务结果汇报改写示例（改写前后对比）                                            |
 | `examples/task-summary.md`  | 多任务与迭代需求总结改写示例（改写前后对比）                                      |
+| `examples/scope-boundaries.md` | 适用与不适用的对照，包含简单问答、agent 草稿和混合回复                         |
 
 ---
 
